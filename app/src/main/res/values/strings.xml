@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Vaccine Passport</string>
+    <string name="update_image">Update Image</string>
 </resources>
