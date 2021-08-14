@@ -24,6 +24,8 @@ import java.io.IOException;
 public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE_CAPTURE = 1;
+
+    private static final String IMAGE_DIR_NAME = "vaccine-images";
     private static final String IMAGE_FILE_NAME = "vaccine-image";
 
     @Override
@@ -51,24 +53,13 @@ public class MainActivity extends AppCompatActivity {
 
     private String saveToInternalStorage(Bitmap bitmapImage) {
         ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        // path to /data/data/yourapp/app_data/imageDir
-        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
-        // Create imageDir
-        File mypath = new File(directory, "profile.jpg");
+        File directory = cw.getDir(IMAGE_DIR_NAME, Context.MODE_PRIVATE);
+        File mypath = new File(directory, IMAGE_FILE_NAME);
 
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(mypath);
-            // Use the compress method on the BitMap object to write image to the OutputStream
+        try (FileOutputStream fos = new FileOutputStream(mypath)){
             bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            try {
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
         return directory.getAbsolutePath();
     }
@@ -76,16 +67,15 @@ public class MainActivity extends AppCompatActivity {
     private void loadImageFromStorage() {
         try {
             ContextWrapper cw = new ContextWrapper(getApplicationContext());
-            File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+            File directory = cw.getDir(IMAGE_DIR_NAME, Context.MODE_PRIVATE);
 
-            File f = new File(directory.getAbsolutePath(), "profile.jpg");
+            File f = new File(directory.getAbsolutePath(), IMAGE_FILE_NAME);
             Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
             ImageView img = findViewById(R.id.imageView);
             img.setImageBitmap(b);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
-
     }
 
     @Override
