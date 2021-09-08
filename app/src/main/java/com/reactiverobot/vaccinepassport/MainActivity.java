@@ -92,11 +92,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
             Bundle extras = data.getExtras();
-            Bitmap imageBitmap = (Bitmap) extras.get("data");
-            ImageView imageView = findViewById(R.id.imageView);
-            imageView.setImageBitmap(imageBitmap);
+            if (extras != null) {
+                Bitmap imageBitmap = (Bitmap) extras.get("data");
+                ImageView imageView = findViewById(R.id.imageView);
+                imageView.setImageBitmap(imageBitmap);
 
-            saveToInternalStorage(imageBitmap);
+                saveToInternalStorage(imageBitmap);
+            }
         }
     }
 
