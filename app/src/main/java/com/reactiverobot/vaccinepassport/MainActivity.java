@@ -6,6 +6,7 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
@@ -31,7 +32,6 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int REQUEST_IMAGE_CAPTURE = 1;
 
-    private static final String IMAGE_DIR_NAME = "vaccine-images";
     private static final String IMAGE_FILE_NAME = "vaccine-image";
 
     @Override
@@ -94,12 +94,15 @@ public class MainActivity extends AppCompatActivity {
             File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             File f = new File(directory.getAbsolutePath(), IMAGE_FILE_NAME);
             if (f.exists()) {
-                Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-                ImageView img = findViewById(R.id.imageView);
-                img.setImageBitmap(b);
-
                 int rotation = getCameraPhotoOrientation(f);
-                img.setRotation(rotation);
+                Matrix matrix = new Matrix();
+                matrix.postRotate(rotation);
+
+                Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+                Bitmap rotatedBitmap = Bitmap.createBitmap(b, 0,0, b.getWidth(), b.getHeight(), matrix, true);
+
+                ImageView img = findViewById(R.id.imageView);
+                img.setImageBitmap(rotatedBitmap);
             } else {
                 Log.i("MAIN", "No image found");
             }
