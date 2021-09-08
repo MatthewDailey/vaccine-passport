@@ -6,8 +6,11 @@ import android.content.ContextWrapper;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.WindowManager;
@@ -15,11 +18,13 @@ import android.widget.ImageView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -52,35 +57,48 @@ public class MainActivity extends AppCompatActivity {
 
     private void dispatchTakePictureIntent() {
         Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        try {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-        } catch (ActivityNotFoundException e) {
-            // display error state to the user
+        // Ensure that there's a camera activity to handle the intent
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                Log.e("MAIN", "Failed to create image file");
+                ex.printStackTrace();
+                // Error occurred while creating the File
+            }
+            // Continue only if the File was successfully created
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this,
+                        "com.example.android.fileprovider",
+                        photoFile);
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+            }
+        } else {
+            Log.i("MAIN", "Unable to resovle image capture intent");
         }
     }
 
-    private String saveToInternalStorage(Bitmap bitmapImage) {
-        ContextWrapper cw = new ContextWrapper(getApplicationContext());
-        File directory = cw.getDir(IMAGE_DIR_NAME, Context.MODE_PRIVATE);
-        File mypath = new File(directory, IMAGE_FILE_NAME);
-
-        try (FileOutputStream fos = new FileOutputStream(mypath)){
-            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return directory.getAbsolutePath();
+    private File createImageFile() throws IOException {
+        File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        return File.createTempFile(
+                IMAGE_FILE_NAME,
+                ".jpg",
+                storageDir
+        );
     }
 
     private void loadImageFromStorage() {
         try {
-            ContextWrapper cw = new ContextWrapper(getApplicationContext());
-            File directory = cw.getDir(IMAGE_DIR_NAME, Context.MODE_PRIVATE);
-
+            File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             File f = new File(directory.getAbsolutePath(), IMAGE_FILE_NAME);
-            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
-            ImageView img = findViewById(R.id.imageView);
-            img.setImageBitmap(b);
+            if (f.exists()) {
+                Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+                ImageView img = findViewById(R.id.imageView);
+                img.setImageBitmap(b);
+            }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -96,8 +114,6 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap imageBitmap = (Bitmap) extras.get("data");
                 ImageView imageView = findViewById(R.id.imageView);
                 imageView.setImageBitmap(imageBitmap);
-
-                saveToInternalStorage(imageBitmap);
             }
         }
     }
