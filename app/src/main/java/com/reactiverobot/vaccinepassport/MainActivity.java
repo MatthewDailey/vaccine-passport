@@ -71,26 +71,24 @@ public class MainActivity extends AppCompatActivity {
             // Continue only if the File was successfully created
             if (photoFile != null) {
                 Uri photoURI = FileProvider.getUriForFile(this,
-                        "com.example.android.fileprovider",
+                        "com.reactiverobot.vaccinepassport",
                         photoFile);
                 takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
                 startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
+                Log.e("MAIN", "Issuing intent for image capture");
             }
         } else {
-            Log.i("MAIN", "Unable to resovle image capture intent");
+            Log.i("MAIN", "Unable to resolve image capture intent");
         }
     }
 
     private File createImageFile() throws IOException {
         File storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-        return File.createTempFile(
-                IMAGE_FILE_NAME,
-                ".jpg",
-                storageDir
-        );
+        return new File(storageDir, IMAGE_FILE_NAME);
     }
 
     private void loadImageFromStorage() {
+        Log.i("Main", "entering loadImageFromStorage");
         try {
             File directory = getExternalFilesDir(Environment.DIRECTORY_PICTURES);
             File f = new File(directory.getAbsolutePath(), IMAGE_FILE_NAME);
@@ -98,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
                 ImageView img = findViewById(R.id.imageView);
                 img.setImageBitmap(b);
+            } else {
+                Log.i("MAIN", "No image found");
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -108,13 +108,9 @@ public class MainActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        Log.e("MAIN", "Activity result " + requestCode + ' ' + data + ' ' + resultCode);
         if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            if (extras != null) {
-                Bitmap imageBitmap = (Bitmap) extras.get("data");
-                ImageView imageView = findViewById(R.id.imageView);
-                imageView.setImageBitmap(imageBitmap);
-            }
+            loadImageFromStorage();
         }
     }
 
